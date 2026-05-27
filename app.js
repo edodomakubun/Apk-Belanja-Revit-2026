@@ -1,12 +1,33 @@
-// GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxidUtcc_xzVoo0ErIoopZuu8p8hjqWUmqPzBrv89-SHC5nOKczefX0d-Kft-CfLDHS/exec'; 
+// Mempertahankan URL GAS yang lama
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMH_x4PrdnEobJm3Bu1Q6XulFpDfGxzoDhrfH5ChRdHsOTikJdd5r6I_XNcPlwqCfW/exec'; 
 
 // Format Rupiah
 const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
 
 document.addEventListener('DOMContentLoaded', () => {
   checkSession();
+  
+  // Fitur Kalkulasi Otomatis Total Belanja
+  const inputQty = document.getElementById('qty');
+  const inputHarga = document.getElementById('harga');
+  const totalDisplay = document.getElementById('totalOtomatis');
+
+  const hitungTotal = () => {
+    const q = parseFloat(inputQty.value) || 0;
+    const h = parseFloat(inputHarga.value) || 0;
+    totalDisplay.value = formatRp(q * h);
+  };
+
+  inputQty.addEventListener('input', hitungTotal);
+  inputHarga.addEventListener('input', hitungTotal);
 });
+
+// Registrasi Service Worker di aplikasi utama
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
 
 // --- AUTENTIKASI ---
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -26,7 +47,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await res.json();
     
     if (data.status === 'success') {
-      sessionStorage.setItem('user', JSON.stringify(data.user));
+      // PERUBAHAN: Menggunakan localStorage agar sesi login tersimpan permanen
+      localStorage.setItem('user', JSON.stringify(data.user));
       checkSession();
     } else {
       alert(data.message);
@@ -40,7 +62,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 
 function checkSession() {
-  const user = JSON.parse(sessionStorage.getItem('user'));
+  // PERUBAHAN: Memeriksa data user dari localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
   if (user) {
     document.getElementById('loginView').classList.add('d-none');
     document.getElementById('mainNav').classList.remove('d-none');
@@ -55,35 +78,100 @@ function checkSession() {
 }
 
 function logout() {
-  sessionStorage.removeItem('user');
+  // PERUBAHAN: Menghapus data sesi dari localStorage saat user keluar
+  localStorage.removeItem('user');
   location.reload();
 }
 
 // --- MANAJEMEN ROLE UI ---
 function setupRoleUI(user) {
-  if (user.role === 'kepsek' || user.role === 'ops') {
-    document.getElementById('danaPanel').classList.remove('d-none');
-    document.getElementById('bendaharaPanel').classList.add('d-none');
-  } else if (user.role === 'bendahara') {
-    document.getElementById('danaPanel').classList.add('d-none');
-    document.getElementById('bendaharaPanel').classList.remove('d-none');
-  }
+  const isPimpinan = (user.role === 'kepsek' || user.role === 'ops');
+  
+  // Menampilkan/menyembunyikan panel berdasarkan role
+  document.getElementById('danaPanel').classList.toggle('d-none', !isPimpinan);
+  document.getElementById('summaryKategori').classList.toggle('d-none', !isPimpinan);
+  document.getElementById('detailTransaksiPanel').classList.toggle('d-none', !isPimpinan);
+  document.getElementById('bendaharaPanel').classList.toggle('d-none', isPimpinan);
 }
 
 async function loadDashboard(user) {
   const payload = { action: 'get_dashboard', role: user.role, idguru: user.idguru };
-  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-  const data = await res.json();
   
-  if (data.status === 'success') {
-    if (user.role === 'kepsek' || user.role === 'ops') {
-      document.getElementById('txtTotalDana').innerText = formatRp(data.data.totalDana);
-      document.getElementById('txtPengeluaran').innerText = formatRp(data.data.totalPengeluaran);
-      document.getElementById('txtSisa').innerText = formatRp(data.data.sisaDana);
-    } else {
-      document.getElementById('txtPengeluaranBendahara').innerText = formatRp(data.data.totalPengeluaran);
+  try {
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+      const info = data.data;
+
+      if (user.role === 'kepsek' || user.role === 'ops') {
+        document.getElementById('txtTotalDana').innerText = formatRp(info.totalDana);
+        document.getElementById('txtPengeluaran').innerText = formatRp(info.totalPengeluaran);
+        document.getElementById('txtSisa').innerText = formatRp(info.sisaDana);
+        
+        // Memanggil fungsi perenderan baru untuk Kepsek/Ops
+        renderSummaryKategori(info.transaksi);
+        renderTabelDetail(info.transaksi);
+      } else {
+        document.getElementById('txtPengeluaranBendahara').innerText = formatRp(info.totalPengeluaran);
+      }
     }
+  } catch (error) {
+    console.error('Gagal mengambil data dashboard', error);
   }
+}
+
+// FUNGSI: Render Ringkasan Pengeluaran Per Kategori
+function renderSummaryKategori(transaksi) {
+  const grouped = transaksi.reduce((acc, curr) => {
+    acc[curr.kategori] = (acc[curr.kategori] || 0) + parseFloat(curr.total);
+    return acc;
+  }, {});
+
+  const listContainer = document.getElementById('listKategori');
+  listContainer.innerHTML = '';
+  
+  Object.entries(grouped).forEach(([kat, total]) => {
+    listContainer.innerHTML += `
+      <div class="col-md-3">
+        <div class="card border-0 bg-white shadow-sm h-100">
+          <div class="card-body py-3">
+            <small class="text-muted d-block">${kat}</small>
+            <span class="fw-bold text-dark h6">${formatRp(total)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// FUNGSI: Render Detail Transaksi
+function renderTabelDetail(transaksi) {
+  const tbody = document.getElementById('tbodyTransaksi');
+  tbody.innerHTML = '';
+  
+  if (transaksi.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada transaksi tercatat.</td></tr>';
+    return;
+  }
+
+  transaksi.forEach(item => {
+    tbody.innerHTML += `
+      <tr>
+        <td><small>${item.tanggal}</small></td>
+        <td><span class="badge bg-secondary">${item.kategori}</span></td>
+        <td>
+          ${item.barang} <br>
+          <small class="text-muted">${item.qty} x ${formatRp(item.harga)}</small>
+        </td>
+        <td class="fw-bold text-success">${formatRp(item.total)}</td>
+        <td>
+          ${item.urlBarang ? `<a href="${item.urlBarang}" target="_blank" class="btn btn-sm btn-outline-primary mb-1"><i class="fa-solid fa-box"></i> Barang</a>` : ''}
+          ${item.urlNota ? `<a href="${item.urlNota}" target="_blank" class="btn btn-sm btn-outline-info mb-1"><i class="fa-solid fa-receipt"></i> Nota</a>` : ''}
+        </td>
+      </tr>
+    `;
+  });
 }
 
 // --- KOMPRESI & UPLOAD TRANSAKSI ---
@@ -99,16 +187,15 @@ document.getElementById('transaksiForm').addEventListener('submit', async (e) =>
   const fileNota = document.getElementById('fotoNota').files[0];
 
   try {
-    // 1. Kompresi gambar client-side (< 1MB)
     const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
     const compressedBarang = await imageCompression(fileBarang, options);
     const compressedNota = await imageCompression(fileNota, options);
 
-    // 2. Konversi ke Base64
     const base64Barang = await toBase64(compressedBarang);
     const base64Nota = await toBase64(compressedNota);
 
-    const user = JSON.parse(sessionStorage.getItem('user'));
+    // PERUBAHAN: Mengambil data kredensial user dari localStorage untuk dikirim ke backend
+    const user = JSON.parse(localStorage.getItem('user'));
 
     const payload = {
       action: 'add_transaksi',
@@ -121,7 +208,6 @@ document.getElementById('transaksiForm').addEventListener('submit', async (e) =>
       fotoNota: base64Nota
     };
 
-    // 3. Kirim ke GAS
     statusTxt.innerText = 'Mengirim data ke server...';
     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
     const result = await res.json();
@@ -129,7 +215,8 @@ document.getElementById('transaksiForm').addEventListener('submit', async (e) =>
     if (result.status === 'success') {
       alert('Transaksi berhasil disimpan!');
       e.target.reset();
-      loadDashboard(user); // refresh data angka
+      document.getElementById('totalOtomatis').value = 'Rp 0'; // Reset total kalkulasi
+      loadDashboard(user); 
     } else {
       alert('Gagal: ' + result.message);
     }
