@@ -8,81 +8,136 @@
   <meta name="theme-color" content="#0d6efd">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    :root { --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%); }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .bg-gradient-primary { background: var(--primary-gradient); }
+    .card { border-radius: 12px; transition: transform 0.2s; }
+    .nav-link { font-weight: 500; }
+    .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.2); border-radius: 8px; }
+    #loginView { min-height: 100vh; display: flex; align-items: center; background: #f0f2f5; }
+    .login-card { border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .sync-badge { font-size: 0.7rem; vertical-align: middle; }
+  </style>
 </head>
 <body class="bg-light">
 
-  <nav class="navbar navbar-dark bg-primary shadow-sm d-none" id="mainNav">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm d-none" id="mainNav">
     <div class="container">
-      <span class="navbar-brand mb-0 h1">Belanja Revit</span>
-      <button class="btn btn-danger btn-sm" onclick="logout()">Keluar</button>
+      <span class="navbar-brand fw-bold">B-Revit</span>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#dashboard" id="link-dashboard"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#input" id="link-input"><i class="fa-solid fa-plus-circle me-1"></i> Input Belanja</a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center">
+          <span id="syncStatus" class="badge bg-light text-primary me-3 d-none">
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="syncCount">0</span>
+          </span>
+          <button class="btn btn-outline-light btn-sm" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Keluar
+          </button>
+        </div>
+      </div>
     </div>
   </nav>
 
-  <div class="container mt-4">
-    
-    <div id="loginView" class="row justify-content-center">
-      <div class="col-md-5">
-        <div class="card shadow-sm border-0 rounded-3 mt-5">
-          <div class="card-body p-4">
-            <h3 class="text-center mb-4 text-primary">Login Sistem</h3>
+  <div id="loginView" class="d-none">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-4">
+          <div class="card login-card p-4">
+            <div class="text-center mb-4">
+              <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-wallet fa-2x"></i>
+              </div>
+              <h3 class="fw-bold text-dark">Belanja Revit</h3>
+              <p class="text-muted">Silakan masuk ke akun Anda</p>
+            </div>
             <form id="loginForm">
               <div class="mb-3">
-                <label class="form-label">IDGURU</label>
-                <input type="text" id="idguru" class="form-control" required>
+                <label class="form-label small fw-bold text-muted">ID GURU</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                  <input type="text" id="idguru" class="form-control bg-light border-start-0" placeholder="Masukkan ID Guru" required>
+                </div>
               </div>
               <div class="mb-4">
-                <label class="form-label">PIN</label>
-                <input type="password" id="pin" class="form-control" required>
+                <label class="form-label small fw-bold text-muted">PIN KEAMANAN</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                  <input type="password" id="pin" class="form-control bg-light border-start-0" placeholder="••••" required>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary w-100 py-2">Masuk</button>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm" id="btnLogin">
+                MASUK SEKARANG
+              </button>
             </form>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="appView" class="d-none">
-      
+  <div class="container mt-4 pb-5">
+
+    <div id="dashboardView" class="d-none page-content">
       <div id="danaPanel" class="row mb-4 d-none">
-        <div class="col-md-4 mb-2">
-          <div class="card bg-success text-white border-0 shadow-sm">
-            <div class="card-body">
-              <h6>Total Pagu</h6>
-              <h4 id="txtTotalDana">Rp 0</h4>
+        <div class="col-md-4 mb-3">
+          <div class="card bg-primary text-white border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <h6 class="opacity-75">Total Pagu</h6>
+              <h3 id="txtTotalDana" class="fw-bold mb-0">Rp 0</h3>
             </div>
           </div>
         </div>
-        <div class="col-md-4 mb-2">
-          <div class="card bg-warning text-dark border-0 shadow-sm">
-            <div class="card-body">
-              <h6>Serapan (Pengeluaran)</h6>
-              <h4 id="txtPengeluaran">Rp 0</h4>
+        <div class="col-md-4 mb-3">
+          <div class="card bg-white border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <h6 class="text-muted">Serapan (Pengeluaran)</h6>
+              <h3 id="txtPengeluaran" class="fw-bold mb-0 text-danger">Rp 0</h3>
             </div>
           </div>
         </div>
-        <div class="col-md-4 mb-2">
-          <div class="card bg-info text-white border-0 shadow-sm">
-            <div class="card-body">
-              <h6>Sisa Dana</h6>
-              <h4 id="txtSisa">Rp 0</h4>
+        <div class="col-md-4 mb-3">
+          <div class="card bg-success text-white border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <h6 class="opacity-75">Sisa Dana</h6>
+              <h3 id="txtSisa" class="fw-bold mb-0">Rp 0</h3>
             </div>
           </div>
         </div>
       </div>
 
-      <div id="summaryKategori" class="row mb-4 d-none">
-         <div class="col-12"><h5 class="text-primary mb-3">Total Belanja Per Kategori</h5></div>
-         <div id="listKategori" class="row g-2"></div>
+      <div id="summaryKategori" class="mb-4 d-none">
+         <h5 class="fw-bold mb-3"><i class="fa-solid fa-tags text-primary me-2"></i>Pengeluaran Per Kategori</h5>
+         <div id="listKategori" class="row g-3"></div>
       </div>
 
-      <div id="bendaharaPanel" class="alert alert-primary d-none mb-4 shadow-sm border-0">
-        <h5 class="mb-0">Total Pengeluaran Anda: <strong id="txtPengeluaranBendahara">Rp 0</strong></h5>
+      <div id="bendaharaPanel" class="card border-0 shadow-sm bg-primary text-white mb-4 d-none">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 bg-white text-primary rounded-circle p-3 me-3">
+              <i class="fa-solid fa-receipt fa-xl"></i>
+            </div>
+            <div>
+              <h6 class="mb-0 opacity-75">Total Pengeluaran Anda</h6>
+              <h3 class="mb-0 fw-bold" id="txtPengeluaranBendahara">Rp 0</h3>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="detailTransaksiPanel" class="card shadow-sm border-0 mb-4 d-none">
-        <div class="card-header bg-white border-0 pt-4 pb-0">
-          <h5 class="text-primary">Detail Semua Transaksi</h5>
+        <div class="card-header bg-white border-0 pt-4">
+          <h5 class="fw-bold mb-0"><i class="fa-solid fa-list-check text-primary me-2"></i>Riwayat Transaksi</h5>
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -91,9 +146,9 @@
                 <tr>
                   <th>Tanggal</th>
                   <th>Kategori</th>
-                  <th>Barang</th>
+                  <th>Rincian</th>
                   <th>Total</th>
-                  <th>Dokumentasi</th>
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody id="tbodyTransaksi"></tbody>
@@ -101,59 +156,74 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="card shadow-sm border-0 mb-4 rounded-3">
-        <div class="card-header bg-white border-0 pt-4 pb-0">
-          <h5 class="text-primary">Input Transaksi Belanja</h5>
-        </div>
-        <div class="card-body">
-          <form id="transaksiForm">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Kategori Belanja</label>
-                <select id="kategori" class="form-select" required>
-                  <option value="">Pilih Kategori...</option>
-                  <option value="Bahan Habis Pakai">Bahan Habis Pakai</option>
-                  <option value="Pemeliharaan">Pemeliharaan</option>
-                  <option value="Honorarium">Honorarium</option>
-                  <option value="Lainnya">Lainnya</option>
-                </select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Nama Barang/Jasa</label>
-                <input type="text" id="namaBarang" class="form-control" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label">Qty (Jumlah)</label>
-                <input type="number" id="qty" class="form-control" value="1" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label">Harga Satuan (Rp)</label>
-                <input type="number" id="harga" class="form-control" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label">Total Belanja (Otomatis)</label>
-                <input type="text" id="totalOtomatis" class="form-control bg-light" readonly value="Rp 0">
-              </div>
-              
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Foto Barang</label>
-                <input type="file" id="fotoBarang" class="form-control" accept="image/*" capture="environment" required>
-                <small class="text-muted">Akan dikompres otomatis < 1MB</small>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Foto Nota/Kwitansi</label>
-                <input type="file" id="fotoNota" class="form-control" accept="image/*" capture="environment" required>
-              </div>
+    <div id="inputView" class="d-none page-content">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-0 pt-4">
+              <h5 class="fw-bold mb-0"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Input Transaksi Baru</h5>
+              <p class="text-muted small">Pastikan data yang dimasukkan sudah benar.</p>
             </div>
-            <button type="submit" class="btn btn-primary mt-2" id="btnSubmit">Simpan Transaksi</button>
-            <div id="loadingStatus" class="mt-2 text-primary d-none fw-bold">Memproses dan mengompres foto... mohon tunggu.</div>
-          </form>
+            <div class="card-body">
+              <form id="transaksiForm">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold small">Kategori Belanja</label>
+                    <select id="kategori" class="form-select" required>
+                      <option value="">Pilih Kategori...</option>
+                      <option value="Bahan Habis Pakai">Bahan Habis Pakai</option>
+                      <option value="Pemeliharaan">Pemeliharaan</option>
+                      <option value="Honorarium">Honorarium</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold small">Nama Barang/Jasa</label>
+                    <input type="text" id="namaBarang" class="form-control" placeholder="Misal: Kertas HVS" required>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold small">Qty</label>
+                    <input type="number" id="qty" class="form-control" value="1" min="1" required>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold small">Harga Satuan (Rp)</label>
+                    <input type="number" id="harga" class="form-control" placeholder="0" required>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold small">Total</label>
+                    <input type="text" id="totalOtomatis" class="form-control bg-light fw-bold" readonly value="Rp 0">
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold small">Foto Barang</label>
+                    <input type="file" id="fotoBarang" class="form-control" accept="image/*" capture="environment" required>
+                  </div>
+                  <div class="col-md-6 mb-4">
+                    <label class="form-label fw-bold small">Foto Nota/Kwitansi</label>
+                    <input type="file" id="fotoNota" class="form-control" accept="image/*" capture="environment" required>
+                  </div>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary py-2 fw-bold" id="btnSubmit">
+                    <i class="fa-solid fa-save me-1"></i> Simpan Transaksi
+                  </button>
+                </div>
+                <div id="loadingStatus" class="mt-3 text-center d-none">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  <span class="ms-2 text-primary fw-bold" id="statusMessage">Memproses...</span>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
   <script src="app.js"></script>
 </body>

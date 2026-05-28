@@ -1,0 +1,45 @@
+/* Custom Styles for B-Revit */
+.navbar-brand {
+    letter-spacing: 1px;
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.btn-primary {
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+.badge {
+    font-weight: 600;
+}
+
+#syncStatus {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
