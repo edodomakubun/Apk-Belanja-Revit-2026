@@ -1,12 +1,14 @@
-const CACHE_NAME = 'revit-cache-v2'; // <-- Ubah v1 menjadi v2
+const CACHE_NAME = 'brevit-cache-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/manifest.json',
-  '/style.css', // Tambahkan jika ada file style.css lokal
+  './',
+  'index.html',
+  'app.js',
+  'style.css',
+  'manifest.json',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js'
 ];
 
 self.addEventListener('install', event => {
@@ -16,7 +18,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Menghapus cache versi lama saat aktivasi
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
