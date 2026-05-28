@@ -196,31 +196,38 @@ function renderSummaryKategori(transaksi) {
 }
 
 function renderTabelDetail(transaksi) {
-  const tbody = document.getElementById('tbodyTransaksi');
-  tbody.innerHTML = '';
+  const container = document.getElementById('listTransaksi');
+  if (!container) return;
+  container.innerHTML = '';
   
   if (transaksi.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted small">Belum ada transaksi tercatat.</td></tr>';
+    container.innerHTML = '<div class="col-12"><div class="alert alert-light text-center text-muted small py-4 mb-0">Belum ada transaksi tercatat.</div></div>';
     return;
   }
 
   transaksi.forEach(item => {
-    tbody.innerHTML += `
-      <tr>
-        <td><div class="small fw-bold">${item.tanggal}</div></td>
-        <td><span class="badge bg-light text-dark border">${item.kategori}</span></td>
-        <td>
-          <div class="fw-bold">${item.barang}</div>
-          <small class="text-muted">${item.qty} x ${formatRp(item.harga)}</small>
-        </td>
-        <td class="fw-bold text-primary">${formatRp(item.total)}</td>
-        <td>
-          <div class="btn-group">
-            ${item.urlBarang ? `<a href="${item.urlBarang}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Barang"><i class="fa-solid fa-box"></i></a>` : ''}
-            ${item.urlNota ? `<a href="${item.urlNota}" target="_blank" class="btn btn-sm btn-outline-info" title="Lihat Nota"><i class="fa-solid fa-receipt"></i></a>` : ''}
+    container.innerHTML += `
+      <div class="col-12">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+            <div class="mb-3 mb-md-0">
+              <div class="d-flex align-items-center mb-1">
+                <span class="badge bg-light text-dark border me-2">${item.kategori}</span>
+                <span class="small fw-bold text-muted">${item.tanggal}</span>
+              </div>
+              <h6 class="fw-bold mb-1">${item.barang}</h6>
+              <div class="small text-muted">${item.qty} x ${formatRp(item.harga)}</div>
+            </div>
+            <div class="d-flex flex-column align-items-start align-items-md-end">
+              <div class="fw-bold text-primary fs-5 mb-2">${formatRp(item.total)}</div>
+              <div class="btn-group">
+                ${item.urlBarang ? `<a href="${item.urlBarang}" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat Barang"><i class="fa-solid fa-box"></i></a>` : ''}
+                ${item.urlNota ? `<a href="${item.urlNota}" target="_blank" class="btn btn-sm btn-outline-info" title="Lihat Nota"><i class="fa-solid fa-receipt"></i></a>` : ''}
+              </div>
+            </div>
           </div>
-        </td>
-      </tr>
+        </div>
+      </div>
     `;
   });
 }
